@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scholarship Aggregator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Scholarship Directory</h1>
+            <p>Find fully funded bachelor, master, and PhD opportunities worldwide.</p>
+        </header>
+
+        <section class="filter">
+            <label for="degreeFilter">Select Degree Level:</label>
+            <select id="degreeFilter" onchange="filterScholarships()">
+                <option value="all">All Degrees</option>
+                <option value="bachelor">Bachelor</option>
+                <option value="master">Master</option>
+                <option value="phd">PhD</option>
+            </select>
+        </section>
+
+        <section class="table-section">
+            <table id="scholarshipTable">
+                <thead>
+                    <tr>
+                        <th>Degree</th>
+                        <th class="title-col">Scholarship Title</th>
+                        <th>Country</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data inserted via JS -->
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

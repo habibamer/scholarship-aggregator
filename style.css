@@ -1,0 +1,132 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f4f7f6;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 1000px;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    color: #1a365d;
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+header p {
+    color: #64748b;
+    font-size: 1rem;
+}
+
+.filter {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.filter label {
+    font-weight: 600;
+    color: #475569;
+}
+
+.filter select {
+    padding: 8px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background-color: #fff;
+    font-size: 0.95rem;
+    outline: none;
+    cursor: pointer;
+}
+
+.table-section {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+th {
+    background-color: #f8fafc;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.title-col {
+    width: 45%;
+}
+
+tr:hover {
+    background-color: #f1f5f9;
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    display: inline-block;
+}
+
+.badge.bachelor {
+    background-color: #e0f2fe;
+    color: #0369a1;
+}
+
+.badge.master {
+    background-color: #fef3c7;
+    color: #b45309;
+}
+
+.badge.phd {
+    background-color: #f3e8ff;
+    color: #6b21a8;
+}
+
+.apply-btn {
+    display: inline-block;
+    padding: 6px 14px;
+    background-color: #2563eb;
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+.apply-btn:hover {
+    background-color: #1d4ed8;
+}
