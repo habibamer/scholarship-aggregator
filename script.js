@@ -6,26 +6,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function fetchScholarships() {
     try {
-        const response = await fetch('scholarships.csv');
-        const data = await response.text();
-        
-        const rows = data.split('\n').slice(1);
-        
-        scholarshipsData = rows.map(row => {
-            const cols = row.split(/[,;]/); 
-            if (cols.length >= 4) {
-                return {
-                    degree: cols[0].replace(/"/g, '').trim(),
-                    title: cols[1].replace(/"/g, '').trim(),
-                    country: cols[2].replace(/"/g, '').trim(),
-                    link: cols[3].replace(/"/g, '').trim()
-                };
-            }
-        }).filter(item => item && item.title);
+        const response = await fetch('scholarships.xlsx');
+        const arrayBuffer = await response.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        scholarshipsData = jsonData.map(row => ({
+            degree: row.Degree || '',
+            title: row.Title || '',
+            country: row.Country || '',
+            link: row.Link || ''
+        }));
 
         renderTable(scholarshipsData);
     } catch (error) {
-        console.error('Error loading scholarships data:', error);
+        console.error('Error loading Excel file:', error);
     }
 }
 
