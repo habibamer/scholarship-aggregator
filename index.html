@@ -17,6 +17,11 @@
 
         <section class="filter">
             <div class="field">
+                <label for="kw">Search Title:</label>
+                <input type="text" id="kw" placeholder="e.g. Miami, Yale, Harvard..." onkeyup="if(event.key==='Enter') runFilter()">
+            </div>
+
+            <div class="field">
                 <label for="degree">Degree:</label>
                 <select id="degree">
                     <option value="all">All Degrees</option>

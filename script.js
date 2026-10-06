@@ -69,13 +69,16 @@ function showTable(list) {
 }
 
 function runFilter() {
+    const k = document.getElementById('kw').value.toLowerCase().trim();
     const d = document.getElementById('degree').value.toLowerCase();
     const c = document.getElementById('country').value.toLowerCase();
 
     const result = dataList.filter(item => {
+        const matchKw = (k === '') || item.title.toLowerCase().includes(k);
         const matchDeg = (d === 'all') || item.deg.toLowerCase().includes(d);
         const matchCountry = (c === 'all') || item.country.toLowerCase() === c;
-        return matchDeg && matchCountry;
+
+        return matchKw && matchDeg && matchCountry;
     });
 
     showTable(result);
