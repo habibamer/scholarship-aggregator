@@ -15,6 +15,16 @@ body {
     top: 0px !important;
 }
 
+.goog-te-banner-frame,
+.goog-te-balloon-frame,
+#goog-gt-tt,
+.goog-te-spinner-pos,
+.goog-text-highlight {
+    display: none !important;
+    visibility: hidden !important;
+    box-shadow: none !important;
+}
+
 .container {
     width: 100%;
     max-width: 1000px;
@@ -38,7 +48,6 @@ body {
     border: 1px solid #cbd5e1;
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     z-index: 1000;
-    cursor: pointer;
 }
 
 .translate-icon {
@@ -69,8 +78,7 @@ body {
 }
 
 .goog-te-gadget-icon, 
-.goog-logo-link, 
-.goog-te-banner-frame.skiptranslate {
+.goog-logo-link {
     display: none !important;
 }
 
