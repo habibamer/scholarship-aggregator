@@ -24,7 +24,7 @@ body {
 
 header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 25px;
 }
 
 header h1 {
@@ -36,29 +36,68 @@ header h1 {
 header p {
     color: #64748b;
     font-size: 1rem;
+    margin-bottom: 10px;
+}
+
+.author {
+    display: inline-block;
+    background: #eef2ff;
+    color: #1d4ed8;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
 }
 
 .filter {
     display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 10px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 12px;
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
     margin-bottom: 20px;
 }
 
-.filter label {
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.field label {
+    font-size: 0.85rem;
     font-weight: 600;
     color: #475569;
 }
 
-.filter select {
-    padding: 8px 14px;
+.field select {
+    padding: 8px 12px;
     border: 1px solid #cbd5e1;
     border-radius: 6px;
     background-color: #fff;
+    min-width: 150px;
     font-size: 0.95rem;
     outline: none;
     cursor: pointer;
+}
+
+#btn {
+    padding: 8px 18px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: background-color 0.2s ease;
+}
+
+#btn:hover {
+    background: #1d4ed8;
 }
 
 .table-section {
@@ -129,4 +168,13 @@ tr:hover {
 
 .apply-btn:hover {
     background-color: #1d4ed8;
+}
+
+footer {
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px solid #e2e8f0;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.85rem;
 }

@@ -12,16 +12,28 @@
         <header>
             <h1>Scholarship Directory</h1>
             <p>Find fully funded bachelor, master, and PhD opportunities worldwide.</p>
+            <span class="author">By: <strong>Habib Amer</strong></span>
         </header>
 
         <section class="filter">
-            <label for="degreeFilter">Select Degree Level:</label>
-            <select id="degreeFilter" onchange="filterScholarships()">
-                <option value="all">All Degrees</option>
-                <option value="bachelor">Bachelor</option>
-                <option value="master">Master</option>
-                <option value="phd">PhD</option>
-            </select>
+            <div class="field">
+                <label for="degree">Degree:</label>
+                <select id="degree">
+                    <option value="all">All Degrees</option>
+                    <option value="bachelor">Bachelor</option>
+                    <option value="master">Master</option>
+                    <option value="phd">PhD</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="country">Country:</label>
+                <select id="country">
+                    <option value="all">All Countries</option>
+                </select>
+            </div>
+
+            <button id="btn" onclick="runFilter()">Search</button>
         </section>
 
         <section class="table-section">
@@ -39,10 +51,13 @@
                 </tbody>
             </table>
         </section>
+
+        <footer>
+            <p>Developed by Habib Amer &copy; 2026</p>
+        </footer>
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
     <script src="script.js"></script>
 </body>
 </html>

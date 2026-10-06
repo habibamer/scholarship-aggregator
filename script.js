@@ -1,46 +1,65 @@
-let scholarshipsData = [];
+let dataList = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    fetchScholarships();
+    loadData();
 });
 
-async function fetchScholarships() {
+async function loadData() {
     try {
-        const response = await fetch('scholarships.xlsx');
-        const arrayBuffer = await response.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        const res = await fetch('scholarships.xlsx?t=' + new Date().getTime());
+        const buf = await res.arrayBuffer();
+        
+        const wb = XLSX.read(buf, { type: 'array' });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }).slice(1);
 
-        scholarshipsData = jsonData.map(row => ({
-            degree: row.Degree || '',
-            title: row.Title || '',
-            country: row.Country || '',
-            link: row.Link || ''
-        }));
+        dataList = rows.map(r => {
+            if (!r || r.length < 4) return null;
+            return {
+                deg: String(r[0] || '').trim(),
+                title: String(r[1] || '').trim(),
+                country: String(r[2] || '').trim(),
+                link: String(r[3] || '').trim()
+            };
+        }).filter(item => item && item.title);
 
-        renderTable(scholarshipsData);
-    } catch (error) {
-        console.error('Error loading Excel file:', error);
+        fillCountries(dataList);
+        showTable(dataList);
+    } catch (err) {
+        console.error('Error loading file:', err);
     }
 }
 
-function renderTable(data) {
+function fillCountries(list) {
+    const sel = document.getElementById('country');
+    const countries = [...new Set(list.map(x => x.country))].sort();
+
+    countries.forEach(c => {
+        if (c) {
+            const opt = document.createElement('option');
+            opt.value = c.toLowerCase();
+            opt.textContent = c;
+            sel.appendChild(opt);
+        }
+    });
+}
+
+function showTable(list) {
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
 
-    if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No scholarships found.</td></tr>';
+    if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No scholarships found matching your search.</td></tr>';
         return;
     }
 
-    data.forEach(item => {
+    list.forEach(item => {
         const tr = document.createElement('tr');
-        const badgeClass = item.degree.toLowerCase();
+        const badgeClass = item.deg.toLowerCase();
 
         tr.innerHTML = `
-            <td><span class="badge ${badgeClass}">${item.degree}</span></td>
+            <td><span class="badge ${badgeClass}">${item.deg}</span></td>
             <td>${item.title}</td>
             <td>${item.country}</td>
             <td><a href="${item.link}" target="_blank" class="apply-btn">Apply Now</a></td>
@@ -49,15 +68,15 @@ function renderTable(data) {
     });
 }
 
-function filterScholarships() {
-    const selectedDegree = document.getElementById('degreeFilter').value.toLowerCase();
+function runFilter() {
+    const d = document.getElementById('degree').value.toLowerCase();
+    const c = document.getElementById('country').value.toLowerCase();
 
-    if (selectedDegree === 'all') {
-        renderTable(scholarshipsData);
-    } else {
-        const filtered = scholarshipsData.filter(item => 
-            item.degree.toLowerCase().includes(selectedDegree)
-        );
-        renderTable(filtered);
-    }
+    const result = dataList.filter(item => {
+        const matchDeg = (d === 'all') || item.deg.toLowerCase().includes(d);
+        const matchCountry = (c === 'all') || item.country.toLowerCase() === c;
+        return matchDeg && matchCountry;
+    });
+
+    showTable(result);
 }
