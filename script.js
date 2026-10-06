@@ -1,8 +1,121 @@
 let dataList = [];
+let currentLang = 'en';
+
+const translations = {
+    en: {
+        title: "Scholarship Directory",
+        subtitle: "Find fully funded bachelor, master, and PhD opportunities worldwide.",
+        by: "By",
+        searchLabel: "Search Title:",
+        ph: "e.g. Miami, Yale, Harvard...",
+        degreeLabel: "Degree:",
+        allDegrees: "All Degrees",
+        bachelor: "Bachelor",
+        master: "Master",
+        phd: "PhD",
+        countryLabel: "Country:",
+        allCountries: "All Countries",
+        searchBtn: "Search",
+        thDegree: "Degree",
+        thTitle: "Scholarship Title",
+        thCountry: "Country",
+        thAction: "Action",
+        applyBtn: "Apply Now",
+        noData: "No scholarships found matching your search.",
+        footerText: "Developed by Habib Amer"
+    },
+    ar: {
+        title: "دليل المنح الدراسية",
+        subtitle: "ابحث عن فرص دراسية كاملة التمويل لمرحلة البكالوريوس والماجستير والدكتوراه حول العالم.",
+        by: "بواسطة",
+        searchLabel: "عنوان البحث:",
+        ph: "مثال: ميامي، ييل، هارفارد...",
+        degreeLabel: "الدرجة العلمية:",
+        allDegrees: "جميع الدرجات",
+        bachelor: "بكالوريوس",
+        master: "ماجستير",
+        phd: "دكتوراه",
+        countryLabel: "الدولة:",
+        allCountries: "جميع البلدان",
+        searchBtn: "بحث",
+        thDegree: "الدرجة",
+        thTitle: "عنوان المنحة الدراسية",
+        thCountry: "الدولة",
+        thAction: "الإجراء",
+        applyBtn: "قدّم الآن",
+        noData: "لم يتم العثور على منح تطابق بحثك.",
+        footerText: "تطوير حبيب عامر"
+    },
+    ru: {
+        title: "Каталог Стипендий",
+        subtitle: "Найдите полностью финансируемые программы бакалавриата, магистратуры и аспирантуры по всему миру.",
+        by: "Автор",
+        searchLabel: "Поиск по названию:",
+        ph: "например, Майами, Йель, Гарвард...",
+        degreeLabel: "Степень:",
+        allDegrees: "Все степени",
+        bachelor: "Бакалавриат",
+        master: "Магистратура",
+        phd: "Аспирантура",
+        countryLabel: "Страна:",
+        allCountries: "Все страны",
+        searchBtn: "Искать",
+        thDegree: "Степень",
+        thTitle: "Название стипендии",
+        thCountry: "Страна",
+        thAction: "Действие",
+        applyBtn: "Подать заявку",
+        noData: "Стипендии, соответствующие вашему запросу, не найдены.",
+        footerText: "Разработано Хабибом Амером"
+    },
+    es: {
+        title: "Directorio de Becas",
+        subtitle: "Encuentra oportunidades totalmente financiadas para licenciatura, maestría y doctorado en todo el mundo.",
+        by: "Por",
+        searchLabel: "Buscar por título:",
+        ph: "ej. Miami, Yale, Harvard...",
+        degreeLabel: "Grado:",
+        allDegrees: "Todos los grados",
+        bachelor: "Licenciatura",
+        master: "Maestría",
+        phd: "Doctorado",
+        countryLabel: "País:",
+        allCountries: "Todos los países",
+        searchBtn: "Buscar",
+        thDegree: "Grado",
+        thTitle: "Título de la beca",
+        thCountry: "País",
+        thAction: "Acción",
+        applyBtn: "Postular ahora",
+        noData: "No se encontraron becas que coincidan con tu búsqueda.",
+        footerText: "Desarrollado por Habib Amer"
+    }
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
 });
+
+function changeLanguage(lang) {
+    currentLang = lang;
+    document.body.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[lang][key]) {
+            el.textContent = translations[lang][key];
+        }
+    });
+
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+        const key = el.getAttribute('data-i18n-ph');
+        if (translations[lang][key]) {
+            el.placeholder = translations[lang][key];
+        }
+    });
+
+    runFilter();
+}
 
 async function loadData() {
     try {
@@ -50,7 +163,7 @@ function showTable(list) {
     tbody.innerHTML = '';
 
     if (list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No scholarships found matching your search.</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">${translations[currentLang].noData}</td></tr>`;
         return;
     }
 
@@ -62,7 +175,7 @@ function showTable(list) {
             <td><span class="badge ${badgeClass}">${item.deg}</span></td>
             <td>${item.title}</td>
             <td>${item.country}</td>
-            <td><a href="${item.link}" target="_blank" class="apply-btn">Apply Now</a></td>
+            <td><a href="${item.link}" target="_blank" class="apply-btn">${translations[currentLang].applyBtn}</a></td>
         `;
         tbody.appendChild(tr);
     });

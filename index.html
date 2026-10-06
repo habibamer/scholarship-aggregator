@@ -11,49 +11,54 @@
     <div class="container">
         <div class="lang-switch-box">
             <span class="translate-icon">文A</span>
-            <div id="google_translate_element"></div>
+            <select id="langSelect" onchange="changeLanguage(this.value)">
+                <option value="en">English</option>
+                <option value="ar">العربية</option>
+                <option value="ru">Русский</option>
+                <option value="es">Español</option>
+            </select>
         </div>
 
         <header>
-            <h1>Scholarship Directory</h1>
-            <p>Find fully funded bachelor, master, and PhD opportunities worldwide.</p>
-            <span class="author">By: <strong>Habib Amer</strong></span>
+            <h1 data-i18n="title">Scholarship Directory</h1>
+            <p data-i18n="subtitle">Find fully funded bachelor, master, and PhD opportunities worldwide.</p>
+            <span class="author"><span data-i18n="by">By</span>: <strong>Habib Amer</strong></span>
         </header>
 
         <section class="filter">
             <div class="field">
-                <label for="kw">Search Title:</label>
-                <input type="text" id="kw" placeholder="e.g. Miami, Yale, Harvard..." onkeyup="if(event.key==='Enter') runFilter()">
+                <label for="kw" data-i18n="searchLabel">Search Title:</label>
+                <input type="text" id="kw" data-i18n-ph="ph" placeholder="e.g. Miami, Yale, Harvard..." onkeyup="if(event.key==='Enter') runFilter()">
             </div>
 
             <div class="field">
-                <label for="degree">Degree:</label>
+                <label for="degree" data-i18n="degreeLabel">Degree:</label>
                 <select id="degree">
-                    <option value="all">All Degrees</option>
-                    <option value="bachelor">Bachelor</option>
-                    <option value="master">Master</option>
-                    <option value="phd">PhD</option>
+                    <option value="all" data-i18n="allDegrees">All Degrees</option>
+                    <option value="bachelor" data-i18n="bachelor">Bachelor</option>
+                    <option value="master" data-i18n="master">Master</option>
+                    <option value="phd" data-i18n="phd">PhD</option>
                 </select>
             </div>
 
             <div class="field">
-                <label for="country">Country:</label>
+                <label for="country" data-i18n="countryLabel">Country:</label>
                 <select id="country">
-                    <option value="all">All Countries</option>
+                    <option value="all" data-i18n="allCountries">All Countries</option>
                 </select>
             </div>
 
-            <button id="btn" onclick="runFilter()">Search</button>
+            <button id="btn" onclick="runFilter()" data-i18n="searchBtn">Search</button>
         </section>
 
         <section class="table-section">
             <table id="scholarshipTable">
                 <thead>
                     <tr>
-                        <th>Degree</th>
-                        <th class="title-col">Scholarship Title</th>
-                        <th>Country</th>
-                        <th>Action</th>
+                        <th data-i18n="thDegree">Degree</th>
+                        <th class="title-col" data-i18n="thTitle">Scholarship Title</th>
+                        <th data-i18n="thCountry">Country</th>
+                        <th data-i18n="thAction">Action</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -62,21 +67,11 @@
         </section>
 
         <footer>
-            <p>Developed by Habib Amer &copy; 2026</p>
+            <p><span data-i18n="footerText">Developed by Habib Amer</span> &copy; 2026</p>
         </footer>
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script type="text/javascript">
-        function googleTranslateElementInit() {
-          new google.translate.TranslateElement({
-            pageLanguage: 'en',
-            includedLanguages: 'ar,ru,es',
-            layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-          }, 'google_translate_element');
-        }
-    </script>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     <script src="script.js"></script>
 </body>
 </html>
