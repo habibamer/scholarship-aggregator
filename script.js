@@ -154,7 +154,7 @@ async function loadLastUpdated() {
         const r = await fetch('last_updated.json?t=' + Date.now());
         const d = await r.json();
         document.getElementById('lastUpdated').textContent =
-            new Date(d.updated).toLocaleDateString(currentLang);
+        new Date(d.updated).toLocaleDateString('en-GB')
     } catch (e) {}
 }
 
