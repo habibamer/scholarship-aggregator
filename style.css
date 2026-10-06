@@ -178,3 +178,39 @@ footer {
     color: #64748b;
     font-size: 0.85rem;
 }
+/* Google Translate Custom Styling */
+#google_translate_element {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.goog-te-gadget-simple {
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 6px 12px !important;
+    border-radius: 8px !important;
+    font-size: 0.9rem !important;
+    display: inline-block !important;
+    cursor: pointer;
+}
+
+.goog-te-gadget-simple .goog-te-menu-value span {
+    color: #1e293b !important;
+    font-weight: 500;
+}
+
+.goog-te-banner-frame.skiptranslate {
+    display: none !important;
+}
+
+body {
+    top: 0px !important;
+}
+
+.goog-logo-link, .goog-te-gadget span {
+    display: none !important;
+}
+
+.goog-te-gadget {
+    color: transparent !important;
+}
