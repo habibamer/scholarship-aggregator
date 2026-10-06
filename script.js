@@ -22,7 +22,8 @@ const translations = {
         thAction: "Action",
         applyBtn: "Apply Now",
         noData: "No scholarships found matching your search.",
-        footerText: "Developed by Habib Amer"
+        footerText: "Developed by Habib Amer",
+        lastUpdated: "Last updated"
     },
     ar: {
         title: "دليل المنح الدراسية",
@@ -44,7 +45,8 @@ const translations = {
         thAction: "الإجراء",
         applyBtn: "قدّم الآن",
         noData: "لم يتم العثور على منح تطابق بحثك.",
-        footerText: "تطوير حبيب عامر"
+        footerText: "تطوير حبيب عامر",
+        lastUpdated: "آخر تحديث"
     },
     ru: {
         title: "Каталог Стипендий",
@@ -66,7 +68,8 @@ const translations = {
         thAction: "Действие",
         applyBtn: "Подать заявку",
         noData: "Стипендии, соответствующие вашему запросу, не найдены.",
-        footerText: "Разработано Хабибом Амером"
+        footerText: "Разработано Хабибом Амером",
+        lastUpdated: "Последнее обновление"
     },
     es: {
         title: "Directorio de Becas",
@@ -88,12 +91,14 @@ const translations = {
         thAction: "Acción",
         applyBtn: "Postular ahora",
         noData: "No se encontraron becas que coincidan con tu búsqueda.",
-        footerText: "Desarrollado por Habib Amer"
+        footerText: "Desarrollado por Habib Amer",
+        lastUpdated: "Última actualización"
     }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
+    loadLastUpdated();
 });
 
 function changeLanguage(lang) {
@@ -142,6 +147,15 @@ async function loadData() {
     } catch (err) {
         console.error('Error loading file:', err);
     }
+}
+
+async function loadLastUpdated() {
+    try {
+        const r = await fetch('last_updated.json?t=' + Date.now());
+        const d = await r.json();
+        document.getElementById('lastUpdated').textContent =
+            new Date(d.updated).toLocaleDateString(currentLang);
+    } catch (e) {}
 }
 
 function fillCountries(list) {

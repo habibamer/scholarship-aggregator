@@ -4,6 +4,8 @@ import openpyxl
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 import time
+import json
+from datetime import datetime, timezone
 
 urls = {
     "bachelor": "https://www.for9a.com/en/opportunity/category/Scholarships/bachelor",
@@ -60,6 +62,8 @@ for deg, base_url in urls.items():
             print(f"      Error on page {page}: {e}")
             break
 
+if not data_list:
+    raise SystemExit("No data collected")
 
 wb = openpyxl.Workbook()
 ws = wb.active
@@ -67,7 +71,6 @@ ws.title = "Scholarships"
 
 cols = ["Degree", "Title", "Country", "Link"]
 ws.append(cols)
-
 
 fill = PatternFill(start_color="E0E0E0", end_color="E0E0E0", fill_type="solid")
 font = Font(bold=True, size=11)
@@ -92,3 +95,6 @@ for idx, w in widths.items():
 
 wb.save("scholarships.xlsx")
 print(f"Done! Collected {len(data_list)} scholarships successfully.")
+
+with open("last_updated.json", "w") as f:
+    json.dump({"updated": datetime.now(timezone.utc).isoformat()}, f)
