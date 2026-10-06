@@ -10,7 +10,56 @@ body {
     color: #333;
     display: flex;
     justify-content: center;
-    padding: 40px 20px;
+    padding: 60px 20px 40px 20px;
+    position: relative;
+    top: 0px !important;
+}
+
+.lang-switch-box {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    z-index: 1000;
+}
+
+.translate-icon {
+    font-size: 1.1rem;
+}
+
+#google_translate_element {
+    display: inline-block;
+}
+
+.goog-te-gadget-simple {
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    font-size: 0.88rem !important;
+    cursor: pointer;
+}
+
+.goog-te-gadget-simple .goog-te-menu-value span {
+    color: #334155 !important;
+    font-weight: 600;
+}
+
+.goog-te-gadget-icon, 
+.goog-logo-link, 
+.goog-te-gadget span,
+.goog-te-banner-frame.skiptranslate {
+    display: none !important;
+}
+
+.goog-te-gadget {
+    color: transparent !important;
 }
 
 .container {
@@ -73,19 +122,26 @@ header p {
     color: #475569;
 }
 
-.field select {
-    padding: 8px 12px;
+.field select, 
+.field input {
+    height: 38px;
+    padding: 6px 12px;
     border: 1px solid #cbd5e1;
     border-radius: 6px;
     background-color: #fff;
-    min-width: 150px;
     font-size: 0.95rem;
     outline: none;
-    cursor: pointer;
+    min-width: 200px;
+}
+
+.field input:focus,
+.field select:focus {
+    border-color: #2563eb;
 }
 
 #btn {
-    padding: 8px 18px;
+    height: 38px;
+    padding: 0 20px;
     background: #2563eb;
     color: #fff;
     border: none;
@@ -177,40 +233,4 @@ footer {
     text-align: center;
     color: #64748b;
     font-size: 0.85rem;
-}
-/* Google Translate Custom Styling */
-#google_translate_element {
-    margin-top: 10px;
-    text-align: center;
-}
-
-.goog-te-gadget-simple {
-    background-color: #f8fafc !important;
-    border: 1px solid #cbd5e1 !important;
-    padding: 6px 12px !important;
-    border-radius: 8px !important;
-    font-size: 0.9rem !important;
-    display: inline-block !important;
-    cursor: pointer;
-}
-
-.goog-te-gadget-simple .goog-te-menu-value span {
-    color: #1e293b !important;
-    font-weight: 500;
-}
-
-.goog-te-banner-frame.skiptranslate {
-    display: none !important;
-}
-
-body {
-    top: 0px !important;
-}
-
-.goog-logo-link, .goog-te-gadget span {
-    display: none !important;
-}
-
-.goog-te-gadget {
-    color: transparent !important;
 }

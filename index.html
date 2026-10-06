@@ -8,23 +8,16 @@
 </head>
 <body>
 
+    <div class="lang-switch-box">
+        <span class="translate-icon">🌐</span>
+        <div id="google_translate_element"></div>
+    </div>
+
     <div class="container">
         <header>
             <h1>Scholarship Directory</h1>
             <p>Find fully funded bachelor, master, and PhD opportunities worldwide.</p>
             <span class="author">By: <strong>Habib Amer</strong></span>
-            <div id="google_translate_element"></div>
-
-            <script type="text/javascript">
-            function googleTranslateElementInit() {
-              new google.translate.TranslateElement({
-                pageLanguage: 'en',
-                includedLanguages: 'ar,en,fr,es,de,tr',
-                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-  }, 'google_translate_element');
-}
-</script>
-<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
         </header>
 
         <section class="filter">
@@ -64,7 +57,6 @@
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <!-- Data inserted via JS -->
                 </tbody>
             </table>
         </section>
@@ -75,6 +67,16 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+          new google.translate.TranslateElement({
+            pageLanguage: 'en',
+            includedLanguages: 'ar,ru,es',
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+          }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     <script src="script.js"></script>
 </body>
 </html>
