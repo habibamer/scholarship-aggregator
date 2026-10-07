@@ -87,7 +87,7 @@ The project uses a Python script to fetch data, GitHub Actions to schedule daily
    python -m http.server 8000
    ```
 
-5. Open 'http://localhost:8000' in your browser.
+5. Open 'http: //localhost:8000' in your browser.
 
 ## Author
 
