@@ -1,51 +1,94 @@
-Scholarship Aggregator and Directory
+# Automated Scholarship Aggregator & Pipeline
 
-This is an interactive web interface which lets students find, sift through and view fully funded scholarship options available globally for bachelor, master and Ph.D. level studies.
+An automated data pipeline and web directory that collects and presents scholarship opportunities for Bachelor, Master, and PhD programs, updated daily.
 
-Features
+The project uses a Python script to fetch data, GitHub Actions to schedule daily runs, SheetJS for client-side Excel parsing, and Vanilla JavaScript for the interactive, multi-language interface.
 
-Web Scraping: Python scripts automatically extract scholarship data from online sources and save it directly into an Excel sheet.
+- **Live Demo:** https://habibamer.github.io/scholarship-aggregator/
+- **Author:** Habib Amer
 
-Advanced Filters: Instant search and filter capability based on degree, destination or keywords.
+## System Architecture & Workflow
 
-Multi-Language Support: English, Arabic, Russian, Spanish languages supported by automatic directionality (RTL/LTR).
+1. **Scheduled Execution:** GitHub Actions triggers the scraper daily at 00:00 UTC (`scraper.yml`).
+2. **Data Scraping:** A Python script (`web.py`) fetches scholarship listings from the source portal using `requests` and `BeautifulSoup`.
+3. **File Generation:** The script writes the listings to an Excel spreadsheet (`scholarships.xlsx`) and logs an execution timestamp (`last_updated.json`).
+4. **Automated Commit:** Updated files are committed back to the repository by a GitHub Actions bot (`github-actions[bot]`).
+5. **Client Presentation:** The web app reads the Excel file in the browser via SheetJS and renders the interactive table on GitHub Pages.
 
-Dynamic Excel Data Import: Extracting information from a .xlsx file locally via SheetJS.
+## Technical Details
 
-Responsive Design: Works across various desktop/tablet/mobile browsers.
+### 1. Data Collection (`web.py`)
 
-No Dependencies: Very light-weight, free to host directly on GitHub Pages without any API key.
+- **Category scraping:** Iterates through degree categories (bachelor, master, phd) and paginates through the first 5 pages of each, using BeautifulSoup with `lxml`.
+- **HTTP requests:** Sends a standard browser User-Agent header, with timeout controls and a delay (`time.sleep`) between requests to avoid rate limits.
+- **Data export:** Uses `openpyxl` to build the workbook with header styling, background fill, text wrapping, and custom column widths (15, 50, 20, 45).
+- **Execution log:** Writes a UTC timestamp to `last_updated.json` to record the latest run.
 
-Technology Stack
+### 2. Automation Pipeline (`.github/workflows/scraper.yml`)
 
-Web Scraping: Python (requests, BeautifulSoup, Pandas)
+- **Scheduling:** Standard cron syntax (`0 0 * * *`) for daily runs, with `workflow_dispatch` enabled for manual execution.
+- **Environment:** Runs on `ubuntu-latest` with Python 3.10 (`actions/setup-python@v5`) and installs `requests`, `beautifulsoup4`, `openpyxl`, and `lxml`.
+- **Git integration:** Commits the updated files to the `main` branch automatically.
 
-Frontend: HTML5 / CSS3 / JavaScript (ES6+)
+### 3. Frontend (`index.html`, `script.js`, `style.css`)
 
-Data Processing: SheetJS (xlsx)
+- **In-browser parsing:** Uses SheetJS (`xlsx.full.min.js`) to parse the binary Excel data (`arrayBuffer`) on the client, with no custom backend.
+- **UI translation (i18n):** A translation dictionary for English, Arabic, Russian, and Spanish, switching document direction (`rtl` / `ltr`) accordingly.
+- **Client-side filtering:** In-memory filtering by title keyword, degree, and a dynamically built country list, triggered by the Search button or the Enter key.
+- **Cache control:** Appends a timestamp (`?t=...`) to `fetch()` calls so browsers do not serve an outdated dataset.
 
-Hosting: GitHub Pages
+## Data Source & Known Limitations
 
-Technical Details
+- **Educational purpose:** Data is collected from for9a.com for educational purposes. Always verify details on the official provider page before applying.
+- **Dependency on page structure:** The scraper relies on the source site's HTML structure, so a layout change there may require updating `web.py`.
+- **Dataset scope:** Only the first 5 pages per degree category are fetched. The Excel file is overwritten on each run, so older listings that fall off those pages are removed.
+- **No expiry check:** Application deadlines are not validated, so some listings may already be closed.
+- **Localized interface only:** Language switching applies to the interface; scholarship titles and country names stay in their original English.
 
-Python script fetches scholarship links, cleans up titles and degrees, and outputs them into scholarships.xlsx.
+## Repository Structure
 
-JavaScript reads the Excel file on page load and renders the results dynamically in the HTML table.
+```
+.
+├── .github/
+│   └── workflows/
+│       └── scraper.yml        # Scheduled GitHub Actions workflow
+├── index.html                 # Page markup and structure
+├── style.css                  # Custom CSS layout
+├── script.js                  # Excel parsing, filtering, and i18n logic
+├── web.py                     # Python data collection script
+├── scholarships.xlsx          # Generated Excel dataset
+└── last_updated.json          # Last execution timestamp
+```
 
-Language switching updates all text on the fly and adjusts document direction (RTL for Arabic).
+## Local Setup & Testing
 
-Repository Structure
+1. Clone the repository:
 
-index.html: HTML structure of the website
+   ```bash
+   git clone https://github.com/habibamer/scholarship-aggregator.git
+   cd scholarship-aggregator
+   ```
 
-style.css: Style of the website with RTL/LTR design
+2. Install the Python dependencies:
 
-script.js: Functionality of the website (filters, translations, excel processing)
+   ```bash
+   pip install requests beautifulsoup4 openpyxl lxml
+   ```
 
-scholarships.xlsx: The excel sheet that contains scholarships
+3. Run the scraper:
 
-Using and Maintaining
+   ```bash
+   python web.py
+   ```
 
-Local setup: Just open index.html file in the browser.
+4. Start a local server for the frontend (opening `index.html` directly via `file://` does not work, because browser security restrictions block `fetch()` for local files):
 
-Updating data: Run the Python script to refresh scholarships.xlsx with new entries.
+   ```bash
+   python -m http.server 8000
+   ```
+
+5. Open http://localhost:8000 in your browser.
+
+## Author
+
+Developed and maintained by Habib Amer.
