@@ -134,10 +134,11 @@ async function loadData() {
         const wb = XLSX.read(buf, { type: 'array' });
         const sheet = wb.Sheets[wb.SheetNames[0]];
         
+
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }).slice(1);
 
         dataList = rows.map(r => {
-            if (!r || r.length < 5) return null;
+            if (!r || r.length === 0) return null;
             return {
                 deg: String(r[0] || '').trim(),
                 title: String(r[1] || '').trim(),
