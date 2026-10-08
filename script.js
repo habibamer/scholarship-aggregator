@@ -134,17 +134,25 @@ async function loadData() {
         const wb = XLSX.read(buf, { type: 'array' });
         const sheet = wb.Sheets[wb.SheetNames[0]];
         
-
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }).slice(1);
 
         dataList = rows.map(r => {
             if (!r || r.length === 0) return null;
+            
+            let rawDeadline = String(r[3] || '').trim();
+            let rawLink = String(r[4] || '').trim();
+
+            if (rawDeadline.startsWith('http')) {
+                rawLink = rawDeadline;
+                rawDeadline = 'N/A';
+            }
+
             return {
                 deg: String(r[0] || '').trim(),
                 title: String(r[1] || '').trim(),
                 country: String(r[2] || '').trim(),
-                deadline: String(r[3] || '').trim(),
-                link: String(r[4] || '').trim()
+                deadline: rawDeadline,
+                link: rawLink
             };
         }).filter(item => item && item.title);
 
@@ -154,7 +162,6 @@ async function loadData() {
         console.error('Error loading file:', err);
     }
 }
-
 async function loadLastUpdated() {
     try {
         const r = await fetch('last_updated.json?t=' + Date.now());
@@ -186,6 +193,25 @@ function showTable(list) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">${translations[currentLang].noData}</td></tr>`;
         return;
     }
+
+    list.forEach(item => {
+        const tr = document.createElement('tr');
+        const badgeClass = item.deg.toLowerCase();
+
+        const deadlineHtml = (item.deadline && item.deadline !== 'N/A') 
+            ? `<span class="deadline-tag">${item.deadline}</span>` 
+            : `<span style="color:#94a3b8; font-size:0.85rem;">-</span>`;
+
+        tr.innerHTML = `
+            <td><span class="badge ${badgeClass}">${item.deg}</span></td>
+            <td>${item.title}</td>
+            <td>${item.country}</td>
+            <td>${deadlineHtml}</td>
+            <td><a href="${item.link}" target="_blank" class="apply-btn">${translations[currentLang].applyBtn}</a></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
 
     list.forEach(item => {
         const tr = document.createElement('tr');
