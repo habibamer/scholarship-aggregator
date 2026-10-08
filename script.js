@@ -129,8 +129,9 @@ function changeLanguage(lang) {
 async function loadData() {
     try {
         const res = await fetch('scholarships.xlsx?t=' + new Date().getTime());
-        const buf = await res.arrayBuffer();
+        if (!res.ok) throw new Error("Scholarships file not found");
         
+        const buf = await res.arrayBuffer();
         const wb = XLSX.read(buf, { type: 'array' });
         const sheet = wb.Sheets[wb.SheetNames[0]];
         
@@ -162,17 +163,23 @@ async function loadData() {
         console.error('Error loading file:', err);
     }
 }
+
 async function loadLastUpdated() {
     try {
         const r = await fetch('last_updated.json?t=' + Date.now());
+        if (!r.ok) return;
         const d = await r.json();
         document.getElementById('lastUpdated').textContent =
-        new Date(d.updated).toLocaleDateString('en-GB');
-    } catch (e) {}
+            new Date(d.updated).toLocaleDateString('en-GB');
+    } catch (e) {
+        console.error('Error loading last updated date:', e);
+    }
 }
 
 function fillCountries(list) {
     const sel = document.getElementById('country');
+    sel.innerHTML = `<option value="all" data-i18n="allCountries">${translations[currentLang].allCountries}</option>`;
+    
     const countries = [...new Set(list.map(x => x.country))].sort();
 
     countries.forEach(c => {
@@ -207,21 +214,6 @@ function showTable(list) {
             <td>${item.title}</td>
             <td>${item.country}</td>
             <td>${deadlineHtml}</td>
-            <td><a href="${item.link}" target="_blank" class="apply-btn">${translations[currentLang].applyBtn}</a></td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-    list.forEach(item => {
-        const tr = document.createElement('tr');
-        const badgeClass = item.deg.toLowerCase();
-
-        tr.innerHTML = `
-            <td><span class="badge ${badgeClass}">${item.deg}</span></td>
-            <td>${item.title}</td>
-            <td>${item.country}</td>
-            <td><span class="deadline-tag">${item.deadline}</span></td>
             <td><a href="${item.link}" target="_blank" class="apply-btn">${translations[currentLang].applyBtn}</a></td>
         `;
         tbody.appendChild(tr);
