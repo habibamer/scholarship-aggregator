@@ -18,7 +18,7 @@ headers = {
 }
 
 data_list = []
-max_pages = 5  
+max_pages = 8
 
 for deg, base_url in urls.items():
     print(f"Fetching level: {deg}...")
@@ -52,7 +52,11 @@ for deg, base_url in urls.items():
                 c_tag = card.find("span", class_="bg-gray-100")
                 country = c_tag.get_text(strip=True) if c_tag else "International"
                 
-                item = [deg, title, country, link]
+                # استخراج الموعد النهائي (Deadline)
+                deadline_tag = card.find("span", class_=lambda x: x and "bg-orange-50" in x)
+                deadline = deadline_tag.get_text(strip=True) if deadline_tag else "N/A"
+                
+                item = [deg, title, country, deadline, link]
                 if item not in data_list:
                     data_list.append(item)
                     
@@ -69,13 +73,13 @@ wb = openpyxl.Workbook()
 ws = wb.active
 ws.title = "Scholarships"
 
-cols = ["Degree", "Title", "Country", "Link"]
+cols = ["Degree", "Title", "Country", "Deadline", "Link"]
 ws.append(cols)
 
 fill = PatternFill(start_color="E0E0E0", end_color="E0E0E0", fill_type="solid")
 font = Font(bold=True, size=11)
 
-for i in range(1, 5):
+for i in range(1, 6):
     c = ws.cell(row=1, column=i)
     c.fill = fill
     c.font = font
@@ -85,11 +89,11 @@ for row in data_list:
     ws.append(row)
 
 align = Alignment(wrap_text=True, vertical="center")
-for row in ws.iter_rows(min_row=2, max_row=len(data_list) + 1, min_col=1, max_col=4):
+for row in ws.iter_rows(min_row=2, max_row=len(data_list) + 1, min_col=1, max_col=5):
     for c in row:
         c.alignment = align
 
-widths = {1: 15, 2: 50, 3: 20, 4: 45}
+widths = {1: 15, 2: 45, 3: 18, 4: 25, 5: 40}
 for idx, w in widths.items():
     ws.column_dimensions[get_column_letter(idx)].width = w
 

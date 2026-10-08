@@ -171,7 +171,7 @@ th {
 }
 
 .title-col {
-    width: 45%;
+    width: 40%;
 }
 
 tr:hover {
@@ -200,6 +200,18 @@ tr:hover {
 .badge.phd {
     background-color: #f3e8ff;
     color: #6b21a8;
+}
+
+.deadline-tag {
+    background-color: #fff7ed;
+    color: #ea580c;
+    border: 1px solid #ffedd5;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.83rem;
+    font-weight: 600;
+    white-space: nowrap;
+    display: inline-block;
 }
 
 .apply-btn {

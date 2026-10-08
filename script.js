@@ -19,6 +19,7 @@ const translations = {
         thDegree: "Degree",
         thTitle: "Scholarship Title",
         thCountry: "Country",
+        thDeadline: "Deadline",
         thAction: "Action",
         applyBtn: "Apply Now",
         noData: "No scholarships found matching your search.",
@@ -42,6 +43,7 @@ const translations = {
         thDegree: "الدرجة",
         thTitle: "عنوان المنحة الدراسية",
         thCountry: "الدولة",
+        thDeadline: "الموعد النهائي",
         thAction: "الإجراء",
         applyBtn: "قدّم الآن",
         noData: "لم يتم العثور على منح تطابق بحثك.",
@@ -65,6 +67,7 @@ const translations = {
         thDegree: "Степень",
         thTitle: "Название стипендии",
         thCountry: "Страна",
+        thDeadline: "Крайний срок",
         thAction: "Действие",
         applyBtn: "Подать заявку",
         noData: "Стипендии, соответствующие вашему запросу, не найдены.",
@@ -88,6 +91,7 @@ const translations = {
         thDegree: "Grado",
         thTitle: "Título de la beca",
         thCountry: "País",
+        thDeadline: "Fecha límite",
         thAction: "Acción",
         applyBtn: "Postular ahora",
         noData: "No se encontraron becas que coincidan con tu búsqueda.",
@@ -133,12 +137,13 @@ async function loadData() {
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }).slice(1);
 
         dataList = rows.map(r => {
-            if (!r || r.length < 4) return null;
+            if (!r || r.length < 5) return null;
             return {
                 deg: String(r[0] || '').trim(),
                 title: String(r[1] || '').trim(),
                 country: String(r[2] || '').trim(),
-                link: String(r[3] || '').trim()
+                deadline: String(r[3] || '').trim(),
+                link: String(r[4] || '').trim()
             };
         }).filter(item => item && item.title);
 
@@ -154,7 +159,7 @@ async function loadLastUpdated() {
         const r = await fetch('last_updated.json?t=' + Date.now());
         const d = await r.json();
         document.getElementById('lastUpdated').textContent =
-        new Date(d.updated).toLocaleDateString('en-GB')
+        new Date(d.updated).toLocaleDateString('en-GB');
     } catch (e) {}
 }
 
@@ -177,7 +182,7 @@ function showTable(list) {
     tbody.innerHTML = '';
 
     if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">${translations[currentLang].noData}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">${translations[currentLang].noData}</td></tr>`;
         return;
     }
 
@@ -189,6 +194,7 @@ function showTable(list) {
             <td><span class="badge ${badgeClass}">${item.deg}</span></td>
             <td>${item.title}</td>
             <td>${item.country}</td>
+            <td><span class="deadline-tag">${item.deadline}</span></td>
             <td><a href="${item.link}" target="_blank" class="apply-btn">${translations[currentLang].applyBtn}</a></td>
         `;
         tbody.appendChild(tr);
