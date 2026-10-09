@@ -7,9 +7,14 @@ import time
 import json
 from datetime import datetime, timezone
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-}
+# استخدام Session للحفاظ على أداء الطلبات والكوكيز
+session = requests.Session()
+session.headers.update({
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9,ar;q=0.8",
+    "Connection": "keep-alive"
+})
 
 data_list = []
 
@@ -32,17 +37,17 @@ for deg, base_url in urls_for9a.items():
         print(f"  --> Page {page}...")
         
         res = None
-        for attempt in range(2):
+        for attempt in range(3):
             try:
-                res = requests.get(target_url, headers=headers, timeout=20)
+                res = session.get(target_url, timeout=25)
                 if res.status_code == 200:
                     break
-            except Exception:
-                if attempt == 1:
-                    print(f"      [For9a] Skipped page {page} due to connection timeout.")
-                time.sleep(2)
+            except Exception as e:
+                print(f"      [For9a] Attempt {attempt+1} failed: {e}")
+                time.sleep(3)
 
         if not res or res.status_code != 200:
+            print(f"      [For9a] Skipped page {page} due to HTTP status: {res.status_code if res else 'No Response'}")
             continue
             
         soup = BeautifulSoup(res.content, "lxml")
@@ -75,7 +80,7 @@ for deg, base_url in urls_for9a.items():
             if item not in data_list:
                 data_list.append(item)
                 
-        time.sleep(1)
+        time.sleep(2)
 
 # ==========================================
 # 2. كشط موقع Opportunity Desk
@@ -96,17 +101,17 @@ for deg, base_url in urls_od.items():
         print(f"  --> Page {page}...")
         
         res = None
-        for attempt in range(2):
+        for attempt in range(3):
             try:
-                res = requests.get(target_url, headers=headers, timeout=20)
+                res = session.get(target_url, timeout=25)
                 if res.status_code == 200:
                     break
-            except Exception:
-                if attempt == 1:
-                    print(f"      [OpportunityDesk] Skipped page {page} due to connection timeout.")
-                time.sleep(2)
+            except Exception as e:
+                print(f"      [OpportunityDesk] Attempt {attempt+1} failed: {e}")
+                time.sleep(3)
                 
         if not res or res.status_code != 200:
+            print(f"      [OpportunityDesk] Skipped page {page} due to HTTP status: {res.status_code if res else 'No Response'}")
             continue
             
         soup = BeautifulSoup(res.content, "lxml")
@@ -148,13 +153,15 @@ for deg, base_url in urls_od.items():
             if item not in data_list:
                 data_list.append(item)
                 
-        time.sleep(1)
+        time.sleep(2)
 
 # ==========================================
-# 3. إعادة ترتيب البيانات (تجميع البكالوريوس معاً ثم الماجستير ثم الدكتوراه)
+# 3. إعادة ترتيب البيانات (تجميع حسب المرحلة)
 # ==========================================
 degree_order = {"bachelor": 1, "master": 2, "phd": 3}
 data_list.sort(key=lambda item: degree_order.get(item[0].lower(), 4))
+
+print(f"\nTotal collected active scholarships: {len(data_list)}")
 
 # ==========================================
 # 4. معالجة وإنشاء ملف Excel
@@ -193,10 +200,10 @@ for idx, w in widths.items():
 excel_filename = "scholarships.xlsx"
 try:
     wb.save(excel_filename)
-    print(f"\nDone! Collected and sorted a total of {len(data_list)} active scholarships successfully.")
+    print(f"Successfully saved to {excel_filename}")
 except PermissionError:
     wb.save("scholarships_new.xlsx")
-    print(f"\n[Warning] '{excel_filename}' is open! Saved to 'scholarships_new.xlsx' instead.")
+    print("Saved to scholarships_new.xlsx due to permission error.")
 
 with open("last_updated.json", "w") as f:
     json.dump({"updated": datetime.now(timezone.utc).isoformat()}, f)
