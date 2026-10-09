@@ -28,6 +28,14 @@ plain.headers.update(HEADERS)
 
 SOURCES = {"for9a": "for9a.com", "od": "opportunitydesk.org"}
 
+# كلمات الإغلاق الشاملة
+CLOSED_WORDS = ("closed", "expired", "مغلق", "منتهي", "deadline passed", "applications closed")
+
+def is_closed(r):
+    # فحص العنوان، الموعد النهائي، والرابط للتأكد من عدم وجود أي مؤشر إغلاق
+    text = f"{r[1]} {r[3]} {r[4]}".lower()
+    return any(w in text for w in CLOSED_WORDS)
+
 
 def source_of(link):
     for name, domain in SOURCES.items():
@@ -46,7 +54,7 @@ def get_html(url, timeout=25, tries=2):
                     return res.content
                 print(f"      [{client_name}] status {res.status_code} (try {attempt})")
                 if res.status_code in (403, 404):
-                    break  # إعادة المحاولة لن تفيد
+                    break
             except Exception as e:
                 print(f"      [{client_name}] {type(e).__name__} (try {attempt})")
             time.sleep(2)
@@ -54,7 +62,7 @@ def get_html(url, timeout=25, tries=2):
 
 
 # ==========================================
-# 0. قراءة البيانات القديمة (حتى لا نخسرها إذا فشل موقع)
+# 0. قراءة البيانات القديمة مع استبعاد المغلقة فوراً
 # ==========================================
 old_rows = []
 if os.path.exists(EXCEL_FILE):
@@ -62,10 +70,12 @@ if os.path.exists(EXCEL_FILE):
         wb_old = openpyxl.load_workbook(EXCEL_FILE)
         for r in wb_old.active.iter_rows(min_row=2, values_only=True):
             if r and r[1] and r[4]:
-                old_rows.append([str(x) if x is not None else "" for x in r[:5]])
+                row_str = [str(x) if x is not None else "" for x in r[:5]]
+                if not is_closed(row_str):
+                    old_rows.append(row_str)
     except Exception as e:
         print(f"[Warn] Could not read old file: {e}")
-print(f"[Old data] {len(old_rows)} rows loaded.")
+print(f"[Old data] {len(old_rows)} active rows loaded (closed excluded).")
 
 # ==========================================
 # 1. For9a
@@ -97,7 +107,7 @@ def scrape_for9a():
                 break
             for card in cards:
                 text = card.get_text().lower()
-                if "closed" in text or "مغلق" in text:
+                if any(w in text for w in CLOSED_WORDS):
                     continue
                 a = card.find("a", class_="editor_page")
                 if not a:
@@ -109,14 +119,14 @@ def scrape_for9a():
                 d_tag = card.find("span", class_=lambda x: x and "bg-orange-50" in x)
                 deadline = d_tag.get_text(strip=True) if d_tag else "N/A"
                 item = [deg, a.get_text(strip=True), country, deadline, link]
-                if item not in out:
+                if not is_closed(item) and item not in out:
                     out.append(item)
             time.sleep(1)
     return out
 
 
 # ==========================================
-# 2. Opportunity Desk  (HTML أولاً، ثم RSS كبديل إذا حُجب الموقع)
+# 2. Opportunity Desk
 # ==========================================
 def parse_od_html(content):
     soup = BeautifulSoup(content, "lxml")
@@ -125,12 +135,15 @@ def parse_od_html(content):
         articles = soup.find_all("div", class_=lambda x: x and "post" in x)
     items = []
     for art in articles:
-        if "CLOSED" in art.get_text(strip=True).upper():
+        art_text = art.get_text(strip=True).lower()
+        if any(w in art_text for w in CLOSED_WORDS):
             continue
         t = art.find(["h2", "h3"])
         a = t.find("a") if t else None
         if a and a.get("href"):
-            items.append((a.get_text(strip=True), a["href"]))
+            title_text = a.get_text(strip=True)
+            if not any(w in title_text.lower() for w in CLOSED_WORDS):
+                items.append((title_text, a["href"]))
     return items
 
 
@@ -140,7 +153,9 @@ def parse_od_feed(content):
     for it in soup.find_all("item"):
         t, l = it.find("title"), it.find("link")
         if t and l and l.get_text(strip=True):
-            items.append((t.get_text(strip=True), l.get_text(strip=True)))
+            title_text = t.get_text(strip=True)
+            if not any(w in title_text.lower() for w in CLOSED_WORDS):
+                items.append((title_text, l.get_text(strip=True)))
     return items
 
 
@@ -178,7 +193,7 @@ def scrape_od():
             fails = 0
             for title, link in items:
                 item = [deg, title, "International", "Check Official Website", link]
-                if item not in out:
+                if not is_closed(item) and item not in out:
                     out.append(item)
             time.sleep(1)
     return out
@@ -189,7 +204,7 @@ new_od = scrape_od()
 print(f"\n[Result] For9a: {len(new_for9a)} | OpportunityDesk: {len(new_od)}")
 
 # ==========================================
-# 3. الدمج الآمن: إذا فشل موقع (أو رجع أقل من نصف القديم) نحتفظ بقديمه
+# 3. الدمج الآمن وفلترة الإغلاق النهائية
 # ==========================================
 final = []
 seen = set()
@@ -197,10 +212,11 @@ seen = set()
 
 def add(rows):
     for r in rows:
-        key = (r[0], r[4])  # نفس المنحة تبقى إذا كانت لمرحلة دراسية مختلفة
-        if key not in seen:
-            seen.add(key)
-            final.append(r)
+        if not is_closed(r):
+            key = (r[0], r[4])
+            if key not in seen:
+                seen.add(key)
+                final.append(r)
 
 
 for name, new_rows in (("for9a", new_for9a), ("od", new_od)):
@@ -215,25 +231,15 @@ add([r for r in old_rows if source_of(r[4]) == "other"])
 
 if not final:
     raise SystemExit("[ABORT] No data at all.")
-if not new_for9a and not new_od:
-    raise SystemExit("[ABORT] Both sources failed. Existing files left untouched.")
 
-# حذف المنح المقفولة (من الجديد ومن القديم المحتفَظ به)
-CLOSED_WORDS = ("closed", "expired", "مغلق", "منتهي")
-
-
-def is_closed(r):
-    text = f"{r[1]} {r[3]}".lower()
-    return any(w in text for w in CLOSED_WORDS)
-
-
+# فلترة أخيرة تأكيدية لضمان خلو القائمة تماماً من أي منحة مغلقة
 before = len(final)
 final = [r for r in final if not is_closed(r)]
-print(f"[Closed] Removed {before - len(final)} closed scholarships.")
+print(f"[Closed Filter] Removed {before - len(final)} closed scholarships.")
 
 order = {"bachelor": 1, "master": 2, "phd": 3}
 final.sort(key=lambda r: order.get(r[0].lower(), 4))
-print(f"[Summary] Total scholarships in file: {len(final)}")
+print(f"[Summary] Total active scholarships in file: {len(final)}")
 
 # ==========================================
 # 4. إنشاء ملف Excel
