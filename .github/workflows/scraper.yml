@@ -22,7 +22,7 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install requests beautifulsoup4 openpyxl lxml
+        run: pip install requests beautifulsoup4 openpyxl lxml cloudscraper
 
       - name: Run scraper
         run: python web.py
