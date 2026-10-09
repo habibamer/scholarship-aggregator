@@ -53,7 +53,6 @@ for deg, base_url in urls_for9a.items():
             break
             
         for card in cards:
-            # استثناء المنح المغلقة في فرصة إن وجدت
             card_text = card.get_text().lower()
             if "closed" in card_text or "مغلق" in card_text:
                 continue
@@ -79,7 +78,7 @@ for deg, base_url in urls_for9a.items():
         time.sleep(1)
 
 # ==========================================
-# 2. كشط موقع Opportunity Desk (مع فلترة المنح المغلقة CLOSED)
+# 2. كشط موقع Opportunity Desk
 # ==========================================
 urls_od = {
     "bachelor": "https://opportunitydesk.org/category/fellowships-and-scholarships/undergraduate/",
@@ -121,20 +120,13 @@ for deg, base_url in urls_od.items():
             break
             
         for art in articles:
-            # التحقق مما إذا كانت المنحة تحتوي على كلمة CLOSED
             art_text = art.get_text(strip=True).upper()
             
-            # فحص وجود وسوم الإغلاق أو كلمة CLOSED صريحة
-            is_closed = False
-            if "CLOSED" in art_text:
-                is_closed = True
-            
-            # فحص إضافي عبر الوسوم الرمزية
+            is_closed = "CLOSED" in art_text
             closed_badge = art.find(lambda tag: tag.name in ["span", "div", "a"] and "CLOSED" in tag.get_text().upper())
             if closed_badge:
                 is_closed = True
 
-            # إذا كانت المنحة مغلقة، يتم تخطيها فوراً
             if is_closed:
                 continue
 
@@ -159,7 +151,13 @@ for deg, base_url in urls_od.items():
         time.sleep(1)
 
 # ==========================================
-# 3. معالجة وإنشاء ملف Excel
+# 3. إعادة ترتيب البيانات (تجميع البكالوريوس معاً ثم الماجستير ثم الدكتوراه)
+# ==========================================
+degree_order = {"bachelor": 1, "master": 2, "phd": 3}
+data_list.sort(key=lambda item: degree_order.get(item[0].lower(), 4))
+
+# ==========================================
+# 4. معالجة وإنشاء ملف Excel
 # ==========================================
 if not data_list:
     raise SystemExit("No active data collected")
@@ -192,8 +190,13 @@ widths = {1: 15, 2: 45, 3: 18, 4: 25, 5: 40}
 for idx, w in widths.items():
     ws.column_dimensions[get_column_letter(idx)].width = w
 
-wb.save("scholarships.xlsx")
-print(f"\nDone! Collected a total of {len(data_list)} active scholarships successfully.")
+excel_filename = "scholarships.xlsx"
+try:
+    wb.save(excel_filename)
+    print(f"\nDone! Collected and sorted a total of {len(data_list)} active scholarships successfully.")
+except PermissionError:
+    wb.save("scholarships_new.xlsx")
+    print(f"\n[Warning] '{excel_filename}' is open! Saved to 'scholarships_new.xlsx' instead.")
 
 with open("last_updated.json", "w") as f:
     json.dump({"updated": datetime.now(timezone.utc).isoformat()}, f)
