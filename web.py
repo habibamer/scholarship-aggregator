@@ -197,8 +197,9 @@ seen = set()
 
 def add(rows):
     for r in rows:
-        if r[4] not in seen:
-            seen.add(r[4])
+        key = (r[0], r[4])  # نفس المنحة تبقى إذا كانت لمرحلة دراسية مختلفة
+        if key not in seen:
+            seen.add(key)
             final.append(r)
 
 
