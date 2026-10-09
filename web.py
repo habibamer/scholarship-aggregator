@@ -7,67 +7,162 @@ import time
 import json
 from datetime import datetime, timezone
 
-urls = {
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+}
+
+data_list = []
+
+# ==========================================
+# 1. كشط موقع فرصة (For9a)
+# ==========================================
+urls_for9a = {
     "bachelor": "https://www.for9a.com/en/opportunity/category/Scholarships/bachelor",
     "master": "https://www.for9a.com/en/opportunity/category/Scholarships/master",
     "phd": "https://www.for9a.com/en/opportunity/category/Scholarships/phd"
 }
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-}
+max_pages_for9a = 8
 
-data_list = []
-max_pages = 8
-
-for deg, base_url in urls.items():
-    print(f"Fetching level: {deg}...")
+for deg, base_url in urls_for9a.items():
+    print(f"[For9a] Fetching level: {deg}...")
     
-    for page in range(1, max_pages + 1):
+    for page in range(1, max_pages_for9a + 1):
         target_url = f"{base_url}?page={page}"
         print(f"  --> Page {page}...")
         
-        try:
-            res = requests.get(target_url, headers=headers, timeout=10)
-            if res.status_code != 200:
-                print(f"      Stopped page {page} with status {res.status_code}")
-                break
-                
-            soup = BeautifulSoup(res.content, "lxml")
-            cards = soup.find_all("div", class_="p-4 flex flex-col flex-grow")
-            
-            if not cards:
-                print("      No more cards found.")
-                break
-                
-            for card in cards:
-                title_tag = card.find("a", class_="editor_page")
-                if not title_tag:
-                    continue
-                    
-                title = title_tag.get_text(strip=True)
-                href = title_tag.get("href", "")
-                link = href if href.startswith("http") else f"https://www.for9a.com{href}"
-                
-                c_tag = card.find("span", class_="bg-gray-100")
-                country = c_tag.get_text(strip=True) if c_tag else "International"
-                
-                # استخراج الموعد النهائي (Deadline)
-                deadline_tag = card.find("span", class_=lambda x: x and "bg-orange-50" in x)
-                deadline = deadline_tag.get_text(strip=True) if deadline_tag else "N/A"
-                
-                item = [deg, title, country, deadline, link]
-                if item not in data_list:
-                    data_list.append(item)
-                    
-            time.sleep(1) 
-            
-        except Exception as e:
-            print(f"      Error on page {page}: {e}")
-            break
+        res = None
+        for attempt in range(2):
+            try:
+                res = requests.get(target_url, headers=headers, timeout=20)
+                if res.status_code == 200:
+                    break
+            except Exception:
+                if attempt == 1:
+                    print(f"      [For9a] Skipped page {page} due to connection timeout.")
+                time.sleep(2)
 
+        if not res or res.status_code != 200:
+            continue
+            
+        soup = BeautifulSoup(res.content, "lxml")
+        cards = soup.find_all("div", class_="p-4 flex flex-col flex-grow")
+        
+        if not cards:
+            print("      No more cards found.")
+            break
+            
+        for card in cards:
+            # استثناء المنح المغلقة في فرصة إن وجدت
+            card_text = card.get_text().lower()
+            if "closed" in card_text or "مغلق" in card_text:
+                continue
+
+            title_tag = card.find("a", class_="editor_page")
+            if not title_tag:
+                continue
+                
+            title = title_tag.get_text(strip=True)
+            href = title_tag.get("href", "")
+            link = href if href.startswith("http") else f"https://www.for9a.com{href}"
+            
+            c_tag = card.find("span", class_="bg-gray-100")
+            country = c_tag.get_text(strip=True) if c_tag else "International"
+            
+            deadline_tag = card.find("span", class_=lambda x: x and "bg-orange-50" in x)
+            deadline = deadline_tag.get_text(strip=True) if deadline_tag else "N/A"
+            
+            item = [deg, title, country, deadline, link]
+            if item not in data_list:
+                data_list.append(item)
+                
+        time.sleep(1)
+
+# ==========================================
+# 2. كشط موقع Opportunity Desk (مع فلترة المنح المغلقة CLOSED)
+# ==========================================
+urls_od = {
+    "bachelor": "https://opportunitydesk.org/category/fellowships-and-scholarships/undergraduate/",
+    "master": "https://opportunitydesk.org/category/fellowships-and-scholarships/masters-postgraduate/",
+    "phd": "https://opportunitydesk.org/category/fellowships-and-scholarships/phd-post-doctoral/"
+}
+
+max_pages_od = 5
+
+for deg, base_url in urls_od.items():
+    print(f"\n[OpportunityDesk] Fetching level: {deg}...")
+    
+    for page in range(1, max_pages_od + 1):
+        target_url = base_url if page == 1 else f"{base_url}page/{page}/"
+        print(f"  --> Page {page}...")
+        
+        res = None
+        for attempt in range(2):
+            try:
+                res = requests.get(target_url, headers=headers, timeout=20)
+                if res.status_code == 200:
+                    break
+            except Exception:
+                if attempt == 1:
+                    print(f"      [OpportunityDesk] Skipped page {page} due to connection timeout.")
+                time.sleep(2)
+                
+        if not res or res.status_code != 200:
+            continue
+            
+        soup = BeautifulSoup(res.content, "lxml")
+        articles = soup.find_all("article")
+        
+        if not articles:
+            articles = soup.find_all("div", class_=lambda x: x and "post" in x)
+            
+        if not articles:
+            print("      No more articles found.")
+            break
+            
+        for art in articles:
+            # التحقق مما إذا كانت المنحة تحتوي على كلمة CLOSED
+            art_text = art.get_text(strip=True).upper()
+            
+            # فحص وجود وسوم الإغلاق أو كلمة CLOSED صريحة
+            is_closed = False
+            if "CLOSED" in art_text:
+                is_closed = True
+            
+            # فحص إضافي عبر الوسوم الرمزية
+            closed_badge = art.find(lambda tag: tag.name in ["span", "div", "a"] and "CLOSED" in tag.get_text().upper())
+            if closed_badge:
+                is_closed = True
+
+            # إذا كانت المنحة مغلقة، يتم تخطيها فوراً
+            if is_closed:
+                continue
+
+            title_tag = art.find(["h2", "h3"])
+            if not title_tag:
+                continue
+                
+            a_tag = title_tag.find("a")
+            if not a_tag:
+                continue
+                
+            title = a_tag.get_text(strip=True)
+            link = a_tag.get("href", "")
+            
+            country = "International"
+            deadline = "Check Official Website"
+            
+            item = [deg, title, country, deadline, link]
+            if item not in data_list:
+                data_list.append(item)
+                
+        time.sleep(1)
+
+# ==========================================
+# 3. معالجة وإنشاء ملف Excel
+# ==========================================
 if not data_list:
-    raise SystemExit("No data collected")
+    raise SystemExit("No active data collected")
 
 wb = openpyxl.Workbook()
 ws = wb.active
@@ -98,7 +193,7 @@ for idx, w in widths.items():
     ws.column_dimensions[get_column_letter(idx)].width = w
 
 wb.save("scholarships.xlsx")
-print(f"Done! Collected {len(data_list)} scholarships successfully.")
+print(f"\nDone! Collected a total of {len(data_list)} active scholarships successfully.")
 
 with open("last_updated.json", "w") as f:
     json.dump({"updated": datetime.now(timezone.utc).isoformat()}, f)
