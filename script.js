@@ -1,6 +1,11 @@
 let dataList = [];
 let currentLang = 'en';
 
+// متغيرا التقسيم (Pagination)
+let currentPage = 1;
+const itemsPerPage = 10;
+let filteredData = [];
+
 const translations = {
     en: {
         title: "Scholarship Directory",
@@ -24,7 +29,9 @@ const translations = {
         applyBtn: "Apply Now",
         noData: "No scholarships found matching your search.",
         footerText: "Developed by Habib Amer",
-        lastUpdated: "Last updated"
+        lastUpdated: "Last updated",
+        prevBtn: "Previous",
+        nextBtn: "Next"
     },
     ar: {
         title: "دليل المنح الدراسية",
@@ -48,7 +55,9 @@ const translations = {
         applyBtn: "قدّم الآن",
         noData: "لم يتم العثور على منح تطابق بحثك.",
         footerText: "تطوير حبيب عامر",
-        lastUpdated: "آخر تحديث"
+        lastUpdated: "آخر تحديث",
+        prevBtn: "السابق",
+        nextBtn: "التالي"
     },
     ru: {
         title: "Каталог Стипендий",
@@ -72,7 +81,9 @@ const translations = {
         applyBtn: "Подать заявку",
         noData: "Стипендии, соответствующие вашему запросу, не найдены.",
         footerText: "Разработано Хабибом Амером",
-        lastUpdated: "Последнее обновление"
+        lastUpdated: "Последнее обновление",
+        prevBtn: "Назад",
+        nextBtn: "Вперед"
     },
     es: {
         title: "Directorio de Becas",
@@ -96,7 +107,9 @@ const translations = {
         applyBtn: "Postular ahora",
         noData: "No se encontraron becas que coincidan con tu búsqueda.",
         footerText: "Desarrollado por Habib Amer",
-        lastUpdated: "Última actualización"
+        lastUpdated: "Última actualización",
+        prevBtn: "Anterior",
+        nextBtn: "Siguiente"
     }
 };
 
@@ -158,7 +171,9 @@ async function loadData() {
         }).filter(item => item && item.title);
 
         fillCountries(dataList);
-        showTable(dataList);
+        filteredData = [...dataList];
+        currentPage = 1;
+        showTable();
     } catch (err) {
         console.error('Error loading file:', err);
     }
@@ -192,16 +207,22 @@ function fillCountries(list) {
     });
 }
 
-function showTable(list) {
+function showTable() {
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = '';
 
-    if (list.length === 0) {
+    if (filteredData.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">${translations[currentLang].noData}</td></tr>`;
+        renderPaginationControls(0);
         return;
     }
 
-    list.forEach(item => {
+    // اقتصاص 10 منح فقط بناءً على رقم الصفحة الحالية
+    const startIdx = (currentPage - 1) * itemsPerPage;
+    const endIdx = startIdx + itemsPerPage;
+    const pageItems = filteredData.slice(startIdx, endIdx);
+
+    pageItems.forEach(item => {
         const tr = document.createElement('tr');
         const badgeClass = item.deg.toLowerCase();
 
@@ -218,6 +239,67 @@ function showTable(list) {
         `;
         tbody.appendChild(tr);
     });
+
+    renderPaginationControls(filteredData.length);
+}
+
+// دالة لإنشاء أزرار التنقل بين الصفحات أسفل الجدول
+function renderPaginationControls(totalItems) {
+    let container = document.getElementById('paginationControls');
+    
+    // في حال عدم وجود حاوية الأزرار في ملف HTML، يتم إنشاؤها تلقائياً تحت الجدول
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'paginationControls';
+        container.className = 'pagination-container';
+        const table = document.querySelector('table');
+        if (table && table.parentNode) {
+            table.parentNode.insertBefore(container, table.nextSibling);
+        }
+    }
+
+    container.innerHTML = '';
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+    if (totalPages <= 1) return;
+
+    // زر السابق
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = translations[currentLang].prevBtn;
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => {
+        if (currentPage > 1) {
+            currentPage--;
+            showTable();
+        }
+    };
+    container.appendChild(prevBtn);
+
+    // أزرار الأرقام (1, 2, 3...)
+    for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.textContent = i;
+        if (i === currentPage) {
+            pageBtn.classList.add('active');
+        }
+        pageBtn.onclick = () => {
+            currentPage = i;
+            showTable();
+        };
+        container.appendChild(pageBtn);
+    }
+
+    // زر التالي
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = translations[currentLang].nextBtn;
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.onclick = () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            showTable();
+        }
+    };
+    container.appendChild(nextBtn);
 }
 
 function runFilter() {
@@ -225,7 +307,7 @@ function runFilter() {
     const d = document.getElementById('degree').value.toLowerCase();
     const c = document.getElementById('country').value.toLowerCase();
 
-    const result = dataList.filter(item => {
+    filteredData = dataList.filter(item => {
         const matchKw = (k === '') || item.title.toLowerCase().includes(k);
         const matchDeg = (d === 'all') || item.deg.toLowerCase().includes(d);
         const matchCountry = (c === 'all') || item.country.toLowerCase() === c;
@@ -233,5 +315,6 @@ function runFilter() {
         return matchKw && matchDeg && matchCountry;
     });
 
-    showTable(result);
+    currentPage = 1; 
+    showTable();
 }
