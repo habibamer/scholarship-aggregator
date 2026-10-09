@@ -1,4 +1,4 @@
-import requests
+import cloudscraper
 from bs4 import BeautifulSoup
 import openpyxl
 from openpyxl.styles import Alignment, Font, PatternFill
@@ -7,14 +7,14 @@ import time
 import json
 from datetime import datetime, timezone
 
-# استخدام Session للحفاظ على أداء الطلبات والكوكيز
-session = requests.Session()
-session.headers.update({
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9,ar;q=0.8",
-    "Connection": "keep-alive"
-})
+# إنشاء كائن scraper متطور يتجاوز الحظر السحابي وCloudflare
+scraper = cloudscraper.create_scraper(
+    browser={
+        'browser': 'chrome',
+        'platform': 'windows',
+        'desktop': True
+    }
+)
 
 data_list = []
 
@@ -39,15 +39,15 @@ for deg, base_url in urls_for9a.items():
         res = None
         for attempt in range(3):
             try:
-                res = session.get(target_url, timeout=25)
+                res = scraper.get(target_url, timeout=25)
                 if res.status_code == 200:
                     break
             except Exception as e:
-                print(f"      [For9a] Attempt {attempt+1} failed: {e}")
-                time.sleep(3)
+                print(f"      [For9a] Retry {attempt+1} due to error: {e}")
+                time.sleep(2)
 
         if not res or res.status_code != 200:
-            print(f"      [For9a] Skipped page {page} due to HTTP status: {res.status_code if res else 'No Response'}")
+            print(f"      [For9a] Skipped page {page}")
             continue
             
         soup = BeautifulSoup(res.content, "lxml")
@@ -80,7 +80,7 @@ for deg, base_url in urls_for9a.items():
             if item not in data_list:
                 data_list.append(item)
                 
-        time.sleep(2)
+        time.sleep(1)
 
 # ==========================================
 # 2. كشط موقع Opportunity Desk
@@ -103,15 +103,15 @@ for deg, base_url in urls_od.items():
         res = None
         for attempt in range(3):
             try:
-                res = session.get(target_url, timeout=25)
+                res = scraper.get(target_url, timeout=25)
                 if res.status_code == 200:
                     break
             except Exception as e:
-                print(f"      [OpportunityDesk] Attempt {attempt+1} failed: {e}")
-                time.sleep(3)
+                print(f"      [OpportunityDesk] Retry {attempt+1} due to error: {e}")
+                time.sleep(2)
                 
         if not res or res.status_code != 200:
-            print(f"      [OpportunityDesk] Skipped page {page} due to HTTP status: {res.status_code if res else 'No Response'}")
+            print(f"      [OpportunityDesk] Skipped page {page}")
             continue
             
         soup = BeautifulSoup(res.content, "lxml")
@@ -153,21 +153,23 @@ for deg, base_url in urls_od.items():
             if item not in data_list:
                 data_list.append(item)
                 
-        time.sleep(2)
+        time.sleep(1)
 
 # ==========================================
-# 3. إعادة ترتيب البيانات (تجميع حسب المرحلة)
+# 3. إعادة ترتيب البيانات
 # ==========================================
 degree_order = {"bachelor": 1, "master": 2, "phd": 3}
 data_list.sort(key=lambda item: degree_order.get(item[0].lower(), 4))
 
-print(f"\nTotal collected active scholarships: {len(data_list)}")
+total_count = len(data_list)
+print(f"\n[Summary] Total active scholarships collected: {total_count}")
 
 # ==========================================
-# 4. معالجة وإنشاء ملف Excel
+# 4. صمام الأمان وإنشاء ملف Excel
 # ==========================================
-if not data_list:
-    raise SystemExit("No active data collected")
+# شرط الحماية: إذا قل العدد عن 80 منحة لا تستبدل الملف القديم المكتمل
+if total_count < 80:
+    raise SystemExit(f"[ABORT] Only {total_count} scholarships fetched. Skipping update to preserve complete dataset.")
 
 wb = openpyxl.Workbook()
 ws = wb.active
@@ -200,10 +202,9 @@ for idx, w in widths.items():
 excel_filename = "scholarships.xlsx"
 try:
     wb.save(excel_filename)
-    print(f"Successfully saved to {excel_filename}")
+    print(f"Successfully updated {excel_filename} with {total_count} items.")
 except PermissionError:
     wb.save("scholarships_new.xlsx")
-    print("Saved to scholarships_new.xlsx due to permission error.")
 
 with open("last_updated.json", "w") as f:
     json.dump({"updated": datetime.now(timezone.utc).isoformat()}, f)
