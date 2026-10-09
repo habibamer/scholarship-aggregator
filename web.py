@@ -28,11 +28,15 @@ plain.headers.update(HEADERS)
 
 SOURCES = {"for9a": "for9a.com", "od": "opportunitydesk.org"}
 
-# كلمات الإغلاق الشاملة
-CLOSED_WORDS = ("closed", "expired", "مغلق", "منتهي", "deadline passed", "applications closed")
+# كلمات الإغلاق الشاملة (تشمل الحالات الظاهرة في الصور مثل closes today و closed)
+CLOSED_WORDS = (
+    "closed", "expired", "مغلق", "منتهي", 
+    "closes today", "closed today", 
+    "deadline passed", "applications closed"
+)
 
 def is_closed(r):
-    # فحص العنوان، الموعد النهائي، والرابط للتأكد من عدم وجود أي مؤشر إغلاق
+    # فحص العنوان، الموعد النهائي، والرابط للتأكد من خلوها تماماً من أي مؤشر إغلاق
     text = f"{r[1]} {r[3]} {r[4]}".lower()
     return any(w in text for w in CLOSED_WORDS)
 
@@ -45,18 +49,16 @@ def source_of(link):
 
 
 def get_html(url, timeout=25, tries=2):
-    """يجرب cloudscraper ثم requests العادي. يرجع bytes أو None."""
     for client_name, client in (("cloudscraper", scraper), ("requests", plain)):
         for attempt in range(1, tries + 1):
             try:
                 res = client.get(url, timeout=timeout)
                 if res.status_code == 200 and res.content:
                     return res.content
-                print(f"      [{client_name}] status {res.status_code} (try {attempt})")
                 if res.status_code in (403, 404):
                     break
-            except Exception as e:
-                print(f"      [{client_name}] {type(e).__name__} (try {attempt})")
+            except Exception:
+                pass
             time.sleep(2)
     return None
 
@@ -91,11 +93,9 @@ def scrape_for9a():
         print(f"[For9a] Fetching level: {deg}...")
         fails = 0
         for page in range(1, 9):
-            print(f"  --> Page {page}...")
             content = get_html(f"{base_url}?page={page}")
             if content is None:
                 fails += 1
-                print(f"      Skipped page {page}")
                 if fails >= 2:
                     break
                 continue
@@ -103,7 +103,6 @@ def scrape_for9a():
             soup = BeautifulSoup(content, "lxml")
             cards = soup.find_all("div", class_="p-4 flex flex-col flex-grow")
             if not cards:
-                print("      No more cards found.")
                 break
             for card in cards:
                 text = card.get_text().lower()
@@ -126,7 +125,7 @@ def scrape_for9a():
 
 
 # ==========================================
-# 2. Opportunity Desk
+# 2. Opportunity Desk (مع فحص دقيق للـ RSS والدصفحات)
 # ==========================================
 def parse_od_html(content):
     soup = BeautifulSoup(content, "lxml")
@@ -142,8 +141,11 @@ def parse_od_html(content):
         a = t.find("a") if t else None
         if a and a.get("href"):
             title_text = a.get_text(strip=True)
-            if not any(w in title_text.lower() for w in CLOSED_WORDS):
-                items.append((title_text, a["href"]))
+            link_val = a["href"]
+            # التحقق الشامل من النص والرابط
+            combined = f"{title_text} {art_text}".lower()
+            if not any(w in combined for w in CLOSED_WORDS):
+                items.append((title_text, link_val))
     return items
 
 
@@ -151,11 +153,28 @@ def parse_od_feed(content):
     soup = BeautifulSoup(content, "xml")
     items = []
     for it in soup.find_all("item"):
-        t, l = it.find("title"), it.find("link")
+        t = it.find("title")
+        l = it.find("link")
+        desc = it.find("description")
+        content_encoded = it.find("content:encoded")
+        
+        # تجميع كل محتوى الـ RSS لفحصه بدقة ضد المنح المغلقة
+        full_text = ""
+        if t: full_text += t.get_text(strip=True) + " "
+        if desc: full_text += desc.get_text(strip=True) + " "
+        if content_encoded: full_text += content_encoded.get_text(strip=True) + " "
+        
+        full_text_lower = full_text.lower()
+        
+        # إذا وجد أي مؤشر إغلاق في الوصف أو العنوان يتم تخطيها فوراً
+        if any(w in full_text_lower for w in CLOSED_WORDS):
+            continue
+            
         if t and l and l.get_text(strip=True):
             title_text = t.get_text(strip=True)
+            link_text = l.get_text(strip=True)
             if not any(w in title_text.lower() for w in CLOSED_WORDS):
-                items.append((title_text, l.get_text(strip=True)))
+                items.append((title_text, link_text))
     return items
 
 
@@ -170,7 +189,6 @@ def scrape_od():
         print(f"\n[OpportunityDesk] Fetching level: {deg}...")
         fails = 0
         for page in range(1, 6):
-            print(f"  --> Page {page}...")
             page_url = base if page == 1 else f"{base}page/{page}/"
             feed_url = base + "feed/" + ("" if page == 1 else f"?paged={page}")
 
@@ -179,14 +197,12 @@ def scrape_od():
             if html:
                 items = parse_od_html(html)
             if not items:
-                print("      HTML gave nothing, trying RSS feed...")
                 feed = get_html(feed_url)
                 if feed:
                     items = parse_od_feed(feed)
 
             if not items:
                 fails += 1
-                print(f"      Skipped page {page}")
                 if fails >= 2:
                     break
                 continue
@@ -204,7 +220,7 @@ new_od = scrape_od()
 print(f"\n[Result] For9a: {len(new_for9a)} | OpportunityDesk: {len(new_od)}")
 
 # ==========================================
-# 3. الدمج الآمن وفلترة الإغلاق النهائية
+# 3. الدمج الآمن وتصفية نهائية صارمة
 # ==========================================
 final = []
 seen = set()
@@ -224,7 +240,6 @@ for name, new_rows in (("for9a", new_for9a), ("od", new_od)):
     if len(new_rows) >= 0.5 * len(old_src) and new_rows:
         add(new_rows)
     else:
-        print(f"[Keep] {name}: got {len(new_rows)} vs {len(old_src)} old -> keeping old rows too.")
         add(new_rows)
         add(old_src)
 add([r for r in old_rows if source_of(r[4]) == "other"])
@@ -232,7 +247,7 @@ add([r for r in old_rows if source_of(r[4]) == "other"])
 if not final:
     raise SystemExit("[ABORT] No data at all.")
 
-# فلترة أخيرة تأكيدية لضمان خلو القائمة تماماً من أي منحة مغلقة
+# فلترة تأكيدية أخيرة
 before = len(final)
 final = [r for r in final if not is_closed(r)]
 print(f"[Closed Filter] Removed {before - len(final)} closed scholarships.")
