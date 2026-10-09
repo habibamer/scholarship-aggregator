@@ -218,6 +218,19 @@ if not final:
 if not new_for9a and not new_od:
     raise SystemExit("[ABORT] Both sources failed. Existing files left untouched.")
 
+# حذف المنح المقفولة (من الجديد ومن القديم المحتفَظ به)
+CLOSED_WORDS = ("closed", "expired", "مغلق", "منتهي")
+
+
+def is_closed(r):
+    text = f"{r[1]} {r[3]}".lower()
+    return any(w in text for w in CLOSED_WORDS)
+
+
+before = len(final)
+final = [r for r in final if not is_closed(r)]
+print(f"[Closed] Removed {before - len(final)} closed scholarships.")
+
 order = {"bachelor": 1, "master": 2, "phd": 3}
 final.sort(key=lambda r: order.get(r[0].lower(), 4))
 print(f"[Summary] Total scholarships in file: {len(final)}")
