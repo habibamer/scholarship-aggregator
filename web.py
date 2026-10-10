@@ -28,15 +28,17 @@ plain.headers.update(HEADERS)
 
 SOURCES = {"for9a": "for9a.com", "od": "opportunitydesk.org"}
 
-# كلمات الإغلاق الشاملة (تشمل الحالات الظاهرة في الصور مثل closes today و closed)
 CLOSED_WORDS = (
     "closed", "expired", "مغلق", "منتهي", 
     "closes today", "closed today", 
-    "deadline passed", "applications closed"
+    "deadline passed", "applications closed",
+    "2025",
+    "january 2026", "february 2026", "march 2026",
+    "jan 2026", "feb 2026", "mar 2026",
+    "valentine season – february", "february 10, 2026"
 )
 
 def is_closed(r):
-    # فحص العنوان، الموعد النهائي، والرابط للتأكد من خلوها تماماً من أي مؤشر إغلاق
     text = f"{r[1]} {r[3]} {r[4]}".lower()
     return any(w in text for w in CLOSED_WORDS)
 
@@ -63,9 +65,6 @@ def get_html(url, timeout=25, tries=2):
     return None
 
 
-# ==========================================
-# 0. قراءة البيانات القديمة مع استبعاد المغلقة فوراً
-# ==========================================
 old_rows = []
 if os.path.exists(EXCEL_FILE):
     try:
@@ -77,11 +76,9 @@ if os.path.exists(EXCEL_FILE):
                     old_rows.append(row_str)
     except Exception as e:
         print(f"[Warn] Could not read old file: {e}")
-print(f"[Old data] {len(old_rows)} active rows loaded (closed excluded).")
+print(f"[Old data] {len(old_rows)} active rows loaded (closed & old dates excluded).")
 
-# ==========================================
-# 1. For9a
-# ==========================================
+
 def scrape_for9a():
     urls = {
         "bachelor": "https://www.for9a.com/en/opportunity/category/Scholarships/bachelor",
@@ -124,9 +121,6 @@ def scrape_for9a():
     return out
 
 
-# ==========================================
-# 2. Opportunity Desk (مع فحص دقيق للـ RSS والدصفحات)
-# ==========================================
 def parse_od_html(content):
     soup = BeautifulSoup(content, "lxml")
     articles = soup.find_all("article")
@@ -134,16 +128,16 @@ def parse_od_html(content):
         articles = soup.find_all("div", class_=lambda x: x and "post" in x)
     items = []
     for art in articles:
-        art_text = art.get_text(strip=True).lower()
-        if any(w in art_text for w in CLOSED_WORDS):
+        full_art_html = str(art).lower()
+        if any(w in full_art_html for w in CLOSED_WORDS):
             continue
+            
         t = art.find(["h2", "h3"])
         a = t.find("a") if t else None
         if a and a.get("href"):
             title_text = a.get_text(strip=True)
             link_val = a["href"]
-            # التحقق الشامل من النص والرابط
-            combined = f"{title_text} {art_text}".lower()
+            combined = f"{title_text} {full_art_html}".lower()
             if not any(w in combined for w in CLOSED_WORDS):
                 items.append((title_text, link_val))
     return items
@@ -158,7 +152,6 @@ def parse_od_feed(content):
         desc = it.find("description")
         content_encoded = it.find("content:encoded")
         
-        # تجميع كل محتوى الـ RSS لفحصه بدقة ضد المنح المغلقة
         full_text = ""
         if t: full_text += t.get_text(strip=True) + " "
         if desc: full_text += desc.get_text(strip=True) + " "
@@ -166,7 +159,6 @@ def parse_od_feed(content):
         
         full_text_lower = full_text.lower()
         
-        # إذا وجد أي مؤشر إغلاق في الوصف أو العنوان يتم تخطيها فوراً
         if any(w in full_text_lower for w in CLOSED_WORDS):
             continue
             
@@ -219,9 +211,6 @@ new_for9a = scrape_for9a()
 new_od = scrape_od()
 print(f"\n[Result] For9a: {len(new_for9a)} | OpportunityDesk: {len(new_od)}")
 
-# ==========================================
-# 3. الدمج الآمن وتصفية نهائية صارمة
-# ==========================================
 final = []
 seen = set()
 
@@ -247,18 +236,14 @@ add([r for r in old_rows if source_of(r[4]) == "other"])
 if not final:
     raise SystemExit("[ABORT] No data at all.")
 
-# فلترة تأكيدية أخيرة
 before = len(final)
 final = [r for r in final if not is_closed(r)]
-print(f"[Closed Filter] Removed {before - len(final)} closed scholarships.")
+print(f"[Closed Filter] Removed {before - len(final)} closed or old (up to March 2026) scholarships.")
 
 order = {"bachelor": 1, "master": 2, "phd": 3}
 final.sort(key=lambda r: order.get(r[0].lower(), 4))
 print(f"[Summary] Total active scholarships in file: {len(final)}")
 
-# ==========================================
-# 4. إنشاء ملف Excel
-# ==========================================
 wb = openpyxl.Workbook()
 ws = wb.active
 ws.title = "Scholarships"
