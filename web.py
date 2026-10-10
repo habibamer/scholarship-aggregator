@@ -200,7 +200,8 @@ def scrape_od():
                 continue
             fails = 0
             for title, link in items:
-                item = [deg, title, "International", "Check Official Website", link]
+                
+                item = [deg, title, "International", "N/A", link]
                 if not is_closed(item) and item not in out:
                     out.append(item)
             time.sleep(1)
