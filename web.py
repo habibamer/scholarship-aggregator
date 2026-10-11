@@ -192,7 +192,7 @@ def scrape_od():
     for deg, base in urls.items():
         print(f"\n[OpportunityDesk] Fetching level: {deg}...")
         fails = 0
-        for page in range(1, 6):
+        for page in range(1, 3):
             page_url = base if page == 1 else f"{base}page/{page}/"
             feed_url = base + "feed/" + ("" if page == 1 else f"?paged={page}")
 
