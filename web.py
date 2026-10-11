@@ -112,8 +112,20 @@ def scrape_for9a():
                 link = href if href.startswith("http") else f"https://www.for9a.com{href}"
                 c_tag = card.find("span", class_="bg-gray-100")
                 country = c_tag.get_text(strip=True) if c_tag else "International"
-                d_tag = card.find("span", class_=lambda x: x and "bg-orange-50" in x)
-                deadline = d_tag.get_text(strip=True) if d_tag else "N/A"
+                
+                # التقاط الموعد النهائي أو حالة المنحة (مثل Coming Soon أو Always Open)
+                deadline = "N/A"
+                footer_div = card.find("div", class_=lambda x: x and "border-t" in str(x))
+                if footer_div:
+                    status_span = footer_div.find("span")
+                    if status_span:
+                        deadline = status_span.get_text(strip=True)
+                
+                if deadline == "N/A":
+                    d_tag = card.find("span", class_=lambda x: x and any(c in str(x) for c in ["bg-orange", "bg-blue", "bg-green"]))
+                    if d_tag:
+                        deadline = d_tag.get_text(strip=True)
+
                 item = [deg, a.get_text(strip=True), country, deadline, link]
                 if not is_closed(item) and item not in out:
                     out.append(item)
@@ -200,7 +212,6 @@ def scrape_od():
                 continue
             fails = 0
             for title, link in items:
-                
                 item = [deg, title, "International", "N/A", link]
                 if not is_closed(item) and item not in out:
                     out.append(item)
@@ -239,7 +250,7 @@ if not final:
 
 before = len(final)
 final = [r for r in final if not is_closed(r)]
-print(f"[Closed Filter] Removed {before - len(final)} closed or old (up to March 2026) scholarships.")
+print(f"[Closed Filter] Removed {before - len(final)} closed or old scholarships.")
 
 order = {"bachelor": 1, "master": 2, "phd": 3}
 final.sort(key=lambda r: order.get(r[0].lower(), 4))
